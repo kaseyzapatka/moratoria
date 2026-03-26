@@ -477,13 +477,19 @@ ggsave(paste0(output, "synthcontrol_avg.png"), width = 14, height = 8, dpi = 300
 
 
 #
-# State-level treatment effects
+# State-level treatment effects (with 95% jackknife+ confidence intervals)
 # --------------------------------------------------------------------------
 ppool_syn_sum$att %>%
   filter(Level != "Average") %>%
   ggplot(aes(x = Time, y = Estimate)) +
   geom_hline(yintercept = 0, color = "grey40", linewidth = 0.5) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  # CI ribbon — post-treatment only (jackknife+ inference is post-treatment)
+  geom_ribbon(
+    data = ~ filter(., Level != "Average", Time >= 0),
+    aes(ymin = lower_bound, ymax = upper_bound),
+    fill = "steelblue", alpha = 0.2, color = NA
+  ) +
   geom_line(color = "black", linewidth = 0.7) +
   facet_wrap(~Level) +
   plot_theme +
@@ -492,7 +498,8 @@ ppool_syn_sum$att %>%
     x        = "Months since moratorium enactment",
     y        = "Treatment effect (log filing rate)",
     title    = "State-level effects of eviction moratoria",
-    subtitle = "Staggered adoption — partially pooled synthetic controls"
+    subtitle = "Staggered adoption — partially pooled synthetic controls",
+    caption  = "Shaded band shows 95% jackknife+ confidence interval (post-treatment only)."
   )
 
 ggsave(paste0(output, "synthcontrol_by_state.png"), width = 16, height = 12, dpi = 300)
